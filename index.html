@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меѓуле - Погодете го зборот</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-decorations">
+        <div class="decoration-circle decoration-circle-one"></div>
+        <div class="decoration-circle decoration-circle-two"></div>
+        <div class="decoration-circle decoration-circle-three"></div>
+    </div>
+
+    <main class="full-screen-game-layout">
+        <header class="game-header">
+            <h1 class="game-title">МЕЃУЛЕ</h1>
+            <p class="game-description">Погодете го тајниот збор од 5 букви.</p>
+        </header>
+
+        <section class="game-mode-selector">
+            <button class="mode-button" id="daily-mode-button">
+                ДНЕВЕН ПРЕДИЗВИК
+            </button>
+
+            <button class="mode-button" id="unlimited-mode-button">
+                НЕОГРАНИЧЕНО
+            </button>
+        </section>
+
+        <section class="range-display-container">
+            <div class="range-word-box" id="lower-bound-display">ААААА</div>
+            <div class="range-separator">помеѓу</div>
+            <div class="range-word-box" id="upper-bound-display">ШШШШШ</div>
+        </section>
+
+        <section class="lives-section" id="lives-display"></section>
+
+        <section class="input-section">
+            <input type="text" id="guess-input" maxlength="5" placeholder="Внесете збор..." autocomplete="off">
+            <button id="submit-guess-button">ПРОВЕРИ</button>
+        </section>
+
+        <section class="visualizer-section">
+            <div class="zoom-container">
+                <div class="zoom-track">
+                    <div id="zoom-range-bar" class="zoom-range-bar"></div>
+                    <div id="zoom-marker" class="zoom-marker"></div>
+                </div>
+                <div class="zoom-percentage-display" id="zoom-percentage-display">100.00%</div>
+            </div>
+        </section>
+
+        <section class="message-section">
+            <p id="feedback-message"></p>
+        </section>
+
+        <section class="keyboard-section" id="virtual-keyboard">
+        </section>
+    </main>
+
+    <div id="victory-overlay" class="victory-overlay hidden">
+        <section class="statistics-section victory">
+            <h2 class="victory-title">
+                <span class="emoji">🎉</span>
+                ПОБЕДА
+                <span class="emoji">🎉</span>
+            </h2>
+
+            <p class="victory-subtitle">Го откри зборот!</p>
+
+            <div class="victory-stats-box">
+                <span class="label">Број на обиди</span>
+                <span id="victory-message" class="value"></span>
+            </div>
+
+            <button id="restart-game-button" class="game-button primary">
+                НОВА ИГРА
+            </button>
+        </section>
+
+        <div class="confetti-container" id="confetti-container"></div>
+    </div>
+
+    <div id="failure-overlay" class="victory-overlay hidden">
+        <div class="confetti-container"></div>
+
+        <section class="statistics-section failure">
+            <h2 class="victory-title">
+                <span class="emoji">💀</span>
+                ИГРАТА ЗАВРШИ
+                <span class="emoji">💀</span>
+            </h2>
+
+            <p class="failure-subtitle">Потрошени се сите 14 обиди</p>
+
+            <div class="failure-word-box">
+                <span class="label">Точниот збор беше</span>
+                <span id="failure-word" class="word"></span>
+            </div>
+
+            <button id="restart-failure-button" class="game-button primary">НОВА ИГРА</button>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
