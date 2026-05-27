@@ -625,4 +625,11 @@ unlimitedModeButton.addEventListener("click", () => {
     startNewGame();
 });
 
+const input = document.getElementById("guess-input");
+const isMobile = window.matchMedia("(pointer: coarse)").matches;
+
+if (isMobile) {
+    input.setAttribute("readonly", true);
+}
+
 initializeGame();
