@@ -21,7 +21,7 @@ const guessInput = document.getElementById("guess-input");
 const submitGuessButton = document.getElementById("submit-guess-button");
 const lowerBoundDisplay = document.getElementById("lower-bound-display");
 const upperBoundDisplay = document.getElementById("upper-bound-display");
-const feedbackMessage = document.getElementById("feedback-message");
+const toastContainer = document.getElementById("toast-container");
 const statisticsDisplay = document.getElementById("statistics-display");
 const victoryMessage = document.getElementById("victory-message");
 const restartGameButton = document.getElementById("restart-game-button");
@@ -112,7 +112,6 @@ function startNewGame() {
     submitGuessButton.disabled = false;
 
     guessInput.value = "";
-    feedbackMessage.textContent = "";
 
     resetKeyboard();
     updateKeyboardState();
@@ -297,13 +296,6 @@ function handleGuessSubmission() {
 
     updateUI();
 
-    feedbackMessage.style.opacity = "0";
-    setTimeout(() => {
-        feedbackMessage.textContent = "";
-        feedbackMessage.className = "";
-        feedbackMessage.style.opacity = "1";
-    }, 150);
-
     guessInput.value = "";
     updateKeyboardState();
 }
@@ -334,8 +326,15 @@ function handleVictory() {
 }
 
 function displayFeedback(message, type) {
-    feedbackMessage.textContent = message;
-    feedbackMessage.className = type;
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    toast.textContent = message;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
 }
 
 function createConfetti() {
