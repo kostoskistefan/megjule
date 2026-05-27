@@ -11,6 +11,7 @@ let isGameOver = false;
 let currentGameMode = localStorage.getItem("gameMode") || "daily";
 let maxGuesses = 14;
 let usedWords = new Set();
+let countdownInterval = null;
 
 const MACEDONIAN_ALPHABET = [
     "А", "Б", "В", "Г", "Д", "Ѓ", "Е", "Ж", "З", "Ѕ", "И", "Ј", "К", "Л", "Љ", "М", 
@@ -34,7 +35,7 @@ async function initializeGame() {
     try {
         const response = await fetch("wordlist.txt");
         const textData = await response.text();
-        
+
         const rawWords = textData.split(/\r?\n/);
         allAvailableWords = [...new Set(rawWords)]
             .map(word => word.trim().toUpperCase())
@@ -63,33 +64,49 @@ function resetKeyboard() {
     });
 }
 
-function startNewGame() {
+function startNewGame(forceReset = false) {
     document.getElementById("victory-overlay")?.classList.add("hidden");
     document.getElementById("failure-overlay")?.classList.add("hidden");
 
     guessCount = 0;
+    hideCountdowns();
     updateLivesUI();
 
     if (currentGameMode === "daily") {
         const saved =
             localStorage.getItem(getDailyStorageKey());
 
-        if (saved) {
+        secretWord = getDailyWord();
+
+        if (saved && currentGameMode === "daily" && !forceReset) {
             const data = JSON.parse(saved);
-
-            document
-                .getElementById("victory-overlay")
-                .classList.remove("hidden");
-
-            victoryMessage.textContent =
-                `Дневниот предизвик е веќе решен во ${data.guesses} обиди!`;
 
             isGameOver = true;
 
+            if (data.result === "win") {
+                document.getElementById("victory-overlay").classList.remove("hidden");
+
+                document.getElementById("victory-word").textContent = secretWord;
+                document.getElementById("victory-message").textContent = data.guesses;
+
+                startDailyCountdown("victory");
+            }
+
+            else {
+
+                document
+                    .getElementById("failure-overlay")
+                    .classList.remove("hidden");
+
+                document
+                    .getElementById("failure-word")
+                    .textContent = secretWord;
+
+                startDailyCountdown("failure");
+            }
+
             return;
         }
-
-        secretWord = getDailyWord();
     }
 
     else {
@@ -130,7 +147,7 @@ function updateModeUI() {
 
 function createAlphabeticalKeyboard() {
     virtualKeyboard.innerHTML = "";
-    
+
     const rows = [
         MACEDONIAN_ALPHABET.slice(0, 11),
         MACEDONIAN_ALPHABET.slice(11, 22),
@@ -140,7 +157,7 @@ function createAlphabeticalKeyboard() {
     rows.forEach((row, rowIndex) => {
         const rowElement = document.createElement("div");
         rowElement.className = "keyboard-row";
-        
+
         row.forEach(key => {
             const keyElement = document.createElement("button");
             keyElement.className = "keyboard-key";
@@ -149,7 +166,7 @@ function createAlphabeticalKeyboard() {
             keyElement.addEventListener("click", () => handleKeyClick(key));
             rowElement.appendChild(keyElement);
         });
-        
+
         if (rowIndex === 2) {
             const backspace = document.createElement("button");
             backspace.className = "keyboard-key keyboard-key-backspace";
@@ -157,14 +174,14 @@ function createAlphabeticalKeyboard() {
             backspace.addEventListener("click", handleBackspace);
             rowElement.appendChild(backspace);
         }
-        
+
         virtualKeyboard.appendChild(rowElement);
     });
 }
 
 function handleKeyClick(letter) {
     if (isGameOver || guessInput.value.length >= 5) return;
-    
+
     const nextGuess = guessInput.value + letter;
     if (isPartialGuessValid(nextGuess)) {
         guessInput.value = nextGuess;
@@ -196,20 +213,20 @@ function isPartialGuessValid(partialGuess) {
 function updateUI() {
     lowerBoundDisplay.textContent = lowerBoundWord;
     upperBoundDisplay.textContent = upperBoundWord;
-    
+
     const totalWords = allAvailableWords.length;
     const currentRangeSize = upperBoundIndex - lowerBoundIndex - 1;
     const percentage = (currentRangeSize / totalWords) * 100;
-    
+
     zoomPercentageDisplay.textContent = `${percentage.toFixed(2)}%`;
-    
+
     const leftEdge = ((lowerBoundIndex + 1) / totalWords) * 100;
 
     const rightEdge = 100 - ((upperBoundIndex) / totalWords) * 100;
-    
+
     zoomRangeBar.style.left = `${leftEdge}%`;
     zoomRangeBar.style.right = `${rightEdge}%`;
-    
+
     const secretWordIndex = allAvailableWords.indexOf(secretWord);
     zoomMarker.style.left = `${(secretWordIndex / totalWords) * 100}%`;
 
@@ -220,21 +237,21 @@ function updateUI() {
 function updateKeyboardState() {
     const currentInput = guessInput.value.toUpperCase();
     const keys = document.querySelectorAll(".keyboard-key[data-letter]");
-    
+
     keys.forEach(keyElement => {
         const letter = keyElement.dataset.letter;
         const potentialNextGuess = currentInput + letter;
-        
+
         const isFullWord =
             potentialNextGuess.length === 5 &&
             (potentialNextGuess === lowerBoundWord ||
-             potentialNextGuess === upperBoundWord);
+                potentialNextGuess === upperBoundWord);
 
         const isDisabled =
             currentInput.length >= 5 ||
             isFullWord ||
             !isPartialGuessValid(potentialNextGuess);
-        
+
         if (isDisabled) {
             keyElement.classList.add("keyboard-key-disabled");
             keyElement.disabled = true;
@@ -306,7 +323,8 @@ function handleVictory() {
     guessInput.disabled = true;
     submitGuessButton.disabled = true;
 
-    victoryMessage.textContent = `${guessCount}`;
+    document.getElementById("victory-word").textContent = secretWord;
+    document.getElementById("victory-message").textContent = guessCount;
 
     document
         .getElementById("victory-overlay")
@@ -319,9 +337,12 @@ function handleVictory() {
             getDailyStorageKey(),
             JSON.stringify({
                 completed: true,
+                result: "win",
                 guesses: guessCount
             })
         );
+
+        startDailyCountdown("victory");
     }
 }
 
@@ -329,9 +350,9 @@ function displayFeedback(message, type) {
     const toast = document.createElement("div");
     toast.className = `toast ${type}`;
     toast.textContent = message;
-    
+
     toastContainer.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.remove();
     }, 3000);
@@ -466,6 +487,83 @@ function handleGameOver() {
     wordEl.textContent = secretWord;
 
     overlay.classList.remove("hidden");
+
+    if (currentGameMode === "daily") {
+        localStorage.setItem(
+            getDailyStorageKey(),
+            JSON.stringify({
+                completed: true,
+                result: "loss",
+                guesses: "X"
+            })
+        );
+
+        startDailyCountdown("failure");
+    }
+}
+
+function getTimeUntilNextDaily() {
+    const now = new Date();
+
+    const next = new Date();
+
+    next.setUTCHours(24, 0, 0, 0);
+
+    const diff = next - now;
+
+    const hours =
+        String(Math.floor(diff / 1000 / 60 / 60)).padStart(2, "0");
+
+    const minutes =
+        String(Math.floor((diff / 1000 / 60) % 60)).padStart(2, "0");
+
+    const seconds =
+        String(Math.floor((diff / 1000) % 60)).padStart(2, "0");
+
+    return `${hours}:${minutes}:${seconds}`;
+}
+
+function startDailyCountdown(type) {
+    clearInterval(countdownInterval);
+
+    const container =
+        document.getElementById(`${type}-countdown`);
+
+    const timeElement =
+        document.getElementById(`${type}-countdown-time`);
+
+    if (!container || !timeElement) return;
+
+    container.classList.remove("hidden");
+
+    function updateCountdown() {
+        timeElement.textContent = getTimeUntilNextDaily();
+
+        if (getTimeUntilNextDaily() === "00:00:00") {
+            clearInterval(countdownInterval);
+
+            localStorage.removeItem(getDailyStorageKey());
+
+            startNewGame();
+        }
+    }
+
+    updateCountdown();
+
+    countdownInterval =
+        setInterval(updateCountdown, 1000);
+}
+
+function hideCountdowns() {
+    document
+        .getElementById("victory-countdown")
+        ?.classList.add("hidden");
+
+    document
+        .getElementById("failure-countdown")
+        ?.classList.add("hidden");
+
+    clearInterval(countdownInterval);
 }
 
 submitGuessButton.addEventListener("click", handleGuessSubmission);
@@ -478,32 +576,27 @@ guessInput.addEventListener("keypress", (event) => {
 });
 
 restartGameButton.addEventListener("click", () => {
-    if (currentGameMode === "daily") {
+    currentGameMode = "unlimited";
+    localStorage.setItem("gameMode", "unlimited");
 
-        const saved =
-            localStorage.getItem(getDailyStorageKey());
+    dailyModeButton.classList.remove("active");
+    unlimitedModeButton.classList.add("active");
 
-        if (saved) {
-            currentGameMode = "unlimited";
-
-            localStorage.setItem("gameMode", "unlimited");
-
-            dailyModeButton.classList.remove("active");
-            unlimitedModeButton.classList.add("active");
-        }
-    }
-
-    startNewGame();
+    startNewGame(true);
 });
 
 document
     .getElementById("restart-failure-button")
     .addEventListener("click", () => {
-        document
-            .getElementById("failure-overlay")
-            .classList.add("hidden");
+        currentGameMode = "unlimited";
+        localStorage.setItem("gameMode", "unlimited");
 
-        startNewGame();
+        dailyModeButton.classList.remove("active");
+        unlimitedModeButton.classList.add("active");
+
+        document.getElementById("failure-overlay").classList.add("hidden");
+
+        startNewGame(true);
     });
 
 const dailyModeButton =

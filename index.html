@@ -58,7 +58,7 @@
         </section>
     </main>
 
-    <div id="victory-overlay" class="victory-overlay hidden">
+    <div id="victory-overlay" class="overlay hidden">
         <section class="statistics-section victory">
             <h2 class="victory-title">
                 <span class="emoji">🎉</span>
@@ -69,8 +69,20 @@
             <p class="victory-subtitle">Го откри зборот!</p>
 
             <div class="victory-stats-box">
+                <span class="label">Точниот збор беше</span>
+                <span id="victory-word" class="word victory-word"></span>
+            </div>
+
+            <div class="victory-stats-box">
                 <span class="label">Број на обиди</span>
                 <span id="victory-message" class="value"></span>
+            </div>
+
+            <div class="daily-countdown hidden" id="victory-countdown">
+                <span class="countdown-label">Следен дневен предизвик за</span>
+                <span class="countdown-time" id="victory-countdown-time">
+                    00:00:00
+                </span>
             </div>
 
             <button id="restart-game-button" class="game-button primary">
@@ -81,9 +93,7 @@
         <div class="confetti-container" id="confetti-container"></div>
     </div>
 
-    <div id="failure-overlay" class="victory-overlay hidden">
-        <div class="confetti-container"></div>
-
+    <div id="failure-overlay" class="overlay hidden">
         <section class="statistics-section failure">
             <h2 class="victory-title">
                 <span class="emoji">💀</span>
@@ -96,6 +106,13 @@
             <div class="failure-word-box">
                 <span class="label">Точниот збор беше</span>
                 <span id="failure-word" class="word"></span>
+            </div>
+
+            <div class="daily-countdown hidden" id="failure-countdown">
+                <span class="countdown-label">Следен дневен предизвик за</span>
+                <span class="countdown-time" id="failure-countdown-time">
+                    00:00:00
+                </span>
             </div>
 
             <button id="restart-failure-button" class="game-button primary">НОВА ИГРА</button>
