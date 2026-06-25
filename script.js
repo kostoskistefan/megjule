@@ -440,12 +440,23 @@ function seededHash(string) {
     return Math.abs(hash);
 }
 
+function mulberry32(seed) {
+    return function () {
+        let t = seed += 0x6D2B79F5;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+}
+
 function getDailyWord() {
-    const seed = getDailySeed();
+    const seed = seededHash(getDailySeed());
 
-    const hash = seededHash(seed);
+    const rng = mulberry32(seed);
 
-    const index = hash % allAvailableWords.length;
+    const index = Math.floor(
+        rng() * allAvailableWords.length
+    );
 
     return allAvailableWords[index];
 }
